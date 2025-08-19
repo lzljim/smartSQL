@@ -17,6 +17,8 @@
 - 性能分析
 - 智能补全
 - 错误诊断
+- 模拟环境数据生成
+- 业务场景模板定制
 
 ### 1.2 技术架构
 
@@ -38,12 +40,119 @@
 │  │   Language      │  │   Code          │  │   Context   │ │
 │  │   Model         │  │   Understanding │  │   Awareness │ │
 │  └─────────────────┘  └─────────────────┘  └─────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│                    Simulation Environment                   │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
+│  │   Mock Data     │  │   Business      │  │   SQLite    │ │
+│  │   Generator     │  │   Scenarios     │  │   Engine    │ │
+│  │                 │  │                 │  │             │ │
+│  │ • E-commerce    │  │ • Blog System   │  │ • Local     │ │
+│  │ • HR System     │  │ • Custom Data   │  │ • Fast      │ │
+│  │ • Templates     │  │ • Real-time     │  │ • Secure    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## 2. 核心API使用
 
 ### 2.1 基础AI聊天API
+
+### 2.0 模拟环境管理
+
+#### 2.0.1 模拟环境初始化
+```typescript
+import * as vscode from 'vscode';
+import { SimulationEnvironmentManager } from './simulationEnvironment';
+
+export class SimulationService {
+  private simulationManager: SimulationEnvironmentManager;
+  
+  constructor() {
+    // 初始化模拟环境
+    const dbPath = path.join(__dirname, '../data/simulation.db');
+    this.simulationManager = new SimulationEnvironmentManager(dbPath);
+  }
+  
+  // 激活模拟场景
+  async activateScenario(scenarioId: string): Promise<void> {
+    try {
+      await this.simulationManager.activateScenario(scenarioId);
+      vscode.window.showInformationMessage(`Activated ${scenarioId} scenario`);
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to activate scenario: ${error.message}`);
+    }
+  }
+  
+  // 获取可用场景
+  getAvailableScenarios(): string[] {
+    return ['ecommerce', 'blog', 'hr', 'custom'];
+  }
+  
+  // 执行SQL查询
+  async executeSQL(sql: string): Promise<any> {
+    try {
+      const result = await this.simulationManager.executeSQL(sql);
+      return result;
+    } catch (error) {
+      throw new Error(`SQL execution failed: ${error.message}`);
+    }
+  }
+}
+```
+
+#### 2.0.2 模拟数据管理
+```typescript
+export class MockDataManagementService {
+  private simulationManager: SimulationEnvironmentManager;
+  
+  constructor(simulationManager: SimulationEnvironmentManager) {
+    this.simulationManager = simulationManager;
+  }
+  
+  // 生成自定义模拟数据
+  async generateCustomData(schema: CustomSchema): Promise<void> {
+    try {
+      // 使用Cursor AI生成模拟数据
+      const prompt = `Generate realistic mock data for this database schema:
+      
+Schema:
+${JSON.stringify(schema, null, 2)}
+
+Requirements:
+1. Generate realistic data that makes business sense
+2. Include appropriate relationships between tables
+3. Use realistic names, emails, and values
+4. Generate 20-50 records per table
+5. Ensure data consistency and referential integrity
+
+Output the data as SQL INSERT statements.`;
+
+      const response = await vscode.commands.executeCommand('cursor.chat', prompt);
+      const insertStatements = this.extractSQLStatements(response);
+      
+      // 执行生成的SQL语句
+      for (const statement of insertStatements) {
+        await this.simulationManager.executeSQL(statement);
+      }
+      
+      vscode.window.showInformationMessage('Custom mock data generated successfully');
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to generate custom data: ${error.message}`);
+    }
+  }
+  
+  // 提取SQL语句
+  private extractSQLStatements(response: string): string[] {
+    const sqlMatches = response.match(/```sql\s*([\s\S]*?)\s*```/g);
+    if (!sqlMatches) return [];
+    
+    return sqlMatches.map(match => {
+      const content = match.match(/```sql\s*([\s\S]*?)\s*```/)?.[1];
+      return content ? content.trim() : '';
+    }).filter(sql => sql.length > 0);
+  }
+}
+```
 
 #### 2.1.1 简单对话
 ```typescript
@@ -1427,13 +1536,17 @@ export class ProgressiveEnhancement {
 - **深度集成**：与编辑器完美集成，响应速度快
 - **上下文感知**：自动获取工作区信息，生成更准确的SQL
 - **稳定性高**：由Cursor官方维护，服务稳定可靠
+- **模拟环境**：内置多种业务场景，无需连接真实数据库
+- **数据安全**：完全本地化，避免敏感信息泄露
+- **快速响应**：本地SQLite执行，响应速度快
 
 ### 9.2 实现要点
 1. **使用Cursor AI API**：`vscode.commands.executeCommand('cursor.chat', prompt)`
 2. **上下文集成**：结合工作区文件、代码模式等信息
-3. **错误处理**：完善的错误处理和降级策略
-4. **性能优化**：智能缓存和异步处理
-5. **用户体验**：渐进式增强和友好的错误提示
+3. **模拟环境**：内置多种业务场景的模拟数据
+4. **错误处理**：完善的错误处理和降级策略
+5. **性能优化**：智能缓存和异步处理
+6. **用户体验**：渐进式增强和友好的错误提示
 
 ### 9.3 最佳实践
 - 构建结构化的AI提示
