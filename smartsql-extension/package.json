@@ -1,0 +1,102 @@
+{
+  "name": "smartsql",
+  "displayName": "SmartSQL - SQL智能助手",
+  "description": "Cursor的SQL智能助手插件，提供SQL管理、验证和智能生成功能",
+  "version": "0.1.0",
+  "publisher": "smartsql",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Database",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "sql",
+    "database",
+    "ai",
+    "cursor",
+    "assistant"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:smartsql.openPanel",
+    "onCommand:smartsql.validateSQL",
+    "onCommand:smartsql.generateSQL"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "smartsql.openPanel",
+        "title": "SmartSQL: 打开SQL助手面板",
+        "category": "SmartSQL"
+      },
+      {
+        "command": "smartsql.validateSQL",
+        "title": "SmartSQL: 验证SQL语法",
+        "category": "SmartSQL"
+      },
+      {
+        "command": "smartsql.generateSQL",
+        "title": "SmartSQL: AI生成SQL",
+        "category": "SmartSQL"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "smartsql",
+          "title": "SmartSQL",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "smartsql": [
+        {
+          "id": "smartsql.sqlExplorer",
+          "name": "SQL收藏夹",
+          "when": "true"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "smartsql.addSQL",
+          "when": "view == smartsql.sqlExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "smartsql.editSQL",
+          "when": "view == smartsql.sqlExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "smartsql.deleteSQL",
+          "when": "view == smartsql.sqlExplorer",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.0"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
